@@ -9,7 +9,7 @@ use toubilib\domain\entities\RendezVous;
 
 final class RendezVousRepositoryFake implements RendezVousRepositoryInterface
 {
-        private array $rendezVousParId = [];
+    private array $rendezVousParId = [];
 
     public function ajouter(RendezVous $rendezVous): void
     {

@@ -25,7 +25,7 @@ final class ServiceRendezVous implements ServiceRendezVousInterface
             throw RendezVousIntrouvableException::pourId($id);
         }
 
-                        $rendezVous->annuler(new DateTimeImmutable());
+        $rendezVous->annuler(new DateTimeImmutable());
 
         $this->rendezVousRepository->save($rendezVous);
 

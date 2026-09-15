@@ -76,7 +76,7 @@ final class RendezVousRepository implements RendezVousRepositoryInterface
         ]);
     }
 
-        private function versEntite(array $ligne): RendezVous
+    private function versEntite(array $ligne): RendezVous
     {
         return RendezVous::reconstituer(
             id: (string) $ligne['id'],

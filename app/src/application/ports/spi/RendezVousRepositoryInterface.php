@@ -8,7 +8,7 @@ use toubilib\domain\entities\RendezVous;
 
 interface RendezVousRepositoryInterface
 {
-        public function find(string $id): ?RendezVous;
+    public function find(string $id): ?RendezVous;
 
-        public function save(RendezVous $rendezVous): void;
+    public function save(RendezVous $rendezVous): void;
 }

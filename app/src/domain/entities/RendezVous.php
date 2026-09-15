@@ -22,7 +22,7 @@ final class RendezVous
     ) {
     }
 
-        public static function reconstituer(
+    public static function reconstituer(
         string $id,
         string $praticienId,
         string $patientId,
@@ -44,7 +44,7 @@ final class RendezVous
         );
     }
 
-        public static function creer(
+    public static function creer(
         string $id,
         string $praticienId,
         string $patientId,
@@ -68,7 +68,7 @@ final class RendezVous
         );
     }
 
-        public function annuler(DateTimeImmutable $maintenant): void
+    public function annuler(DateTimeImmutable $maintenant): void
     {
         if ($this->statut !== StatutRendezVous::CREE) {
             throw new RendezVousDejaAnnuleException(

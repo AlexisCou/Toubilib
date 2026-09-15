@@ -34,7 +34,7 @@ final class RendezVousDTO
         );
     }
 
-        public function versTableau(): array
+    public function versTableau(): array
     {
         return [
             'id' => $this->id,
