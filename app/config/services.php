@@ -2,23 +2,18 @@
 
 declare(strict_types=1);
 
-use PDO;
 use toubilib\adapters\persistence\RendezVousRepository;
 use toubilib\application\ports\api\ServiceRendezVousInterface;
 use toubilib\application\ports\spi\RendezVousRepositoryInterface;
 use toubilib\application\usecases\ServiceRendezVous;
 
 return [
-    PDO::class => function () {
-        $driver = $_ENV['lib.driver'] ?? 'pgsql';
-        $host = $_ENV['lib.host'] ?? 'toubilib.db';
-        $database = $_ENV['lib.database'] ?? 'toubilib';
-        $username = $_ENV['lib.username'] ?? '';
-        $password = $_ENV['lib.password'] ?? '';
+    PDO::class => function (\Psr\Container\ContainerInterface $c) {
+        $db = $c->get('settings')['db'];
 
-        $dsn = sprintf('%s:host=%s;dbname=%s', $driver, $host, $database);
+        $dsn = sprintf('%s:host=%s;dbname=%s', $db['driver'], $db['host'], $db['database']);
 
-        return new PDO($dsn, $username, $password, [
+        return new PDO($dsn, $db['username'], $db['password'], [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);

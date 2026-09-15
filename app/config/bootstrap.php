@@ -12,7 +12,10 @@ $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
 $containerBuilder = new ContainerBuilder();
-$containerBuilder->addDefinitions(__DIR__ . '/dependencies.php');
+$containerBuilder->useAutowiring(false);
+$containerBuilder->addDefinitions(__DIR__ . '/settings.php');
+$containerBuilder->addDefinitions(__DIR__ . '/services.php');
+$containerBuilder->addDefinitions(__DIR__ . '/api.php');
 $container = $containerBuilder->build();
 
 $app = Bridge::create($container);
