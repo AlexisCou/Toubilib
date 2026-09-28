@@ -2,9 +2,13 @@
 
 declare(strict_types=1);
 
+use toubilib\adapters\persistence\PraticienRepository;
 use toubilib\adapters\persistence\RendezVousRepository;
+use toubilib\application\ports\api\PraticienServiceInterface;
 use toubilib\application\ports\api\ServiceRendezVousInterface;
+use toubilib\application\ports\spi\PraticienRepositoryInterface;
 use toubilib\application\ports\spi\RendezVousRepositoryInterface;
+use toubilib\application\usecases\PraticienService;
 use toubilib\application\usecases\ServiceRendezVous;
 
 return [
@@ -21,4 +25,7 @@ return [
 
     RendezVousRepositoryInterface::class => \DI\autowire(RendezVousRepository::class),
     ServiceRendezVousInterface::class => \DI\autowire(ServiceRendezVous::class),
+
+    PraticienRepositoryInterface::class => \DI\autowire(PraticienRepository::class),
+    PraticienServiceInterface::class => \DI\autowire(PraticienService::class),
 ];

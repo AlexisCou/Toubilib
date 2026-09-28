@@ -12,4 +12,6 @@ use toubilib\domain\exceptions\RendezVousDejaPasseException;
 interface ServiceRendezVousInterface
 {
     public function annuler(string $id): RendezVousDTO;
+
+    public function consulter(string $id): RendezVousDTO;
 }

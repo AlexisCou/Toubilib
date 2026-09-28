@@ -31,4 +31,15 @@ final class ServiceRendezVous implements ServiceRendezVousInterface
 
         return RendezVousDTO::depuisEntite($rendezVous);
     }
+
+    public function consulter(string $id): RendezVousDTO
+    {
+        $rendezVous = $this->rendezVousRepository->find($id);
+
+        if ($rendezVous === null) {
+            throw RendezVousIntrouvableException::pourId($id);
+        }
+
+        return RendezVousDTO::depuisEntite($rendezVous);
+    }
 }

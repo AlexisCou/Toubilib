@@ -35,7 +35,7 @@ test('annuler un RDV inconnu lève une exception dédiée', function () {
 test('annuler un RDV déjà passé propage l’erreur du domaine', function () {
     $depot = new RendezVousRepositoryFake();
     $creation = new DateTimeImmutable('2026-08-01 10:00:00');
-    $debut = new DateTimeImmutable('2026-08-10 09:00:00'); 
+    $debut = new DateTimeImmutable('2026-08-10 09:00:00');
     $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', $debut, MotifVisite::CONSULTATION, $creation);
     $depot->ajouter($rdv);
 
@@ -43,4 +43,26 @@ test('annuler un RDV déjà passé propage l’erreur du domaine', function () {
 
     expect(fn () => $service->annuler('rdv-1'))
         ->toThrow(RendezVousDejaPasseException::class);
+});
+
+test('consulter un RDV existant renvoie ses informations', function () {
+    $depot = new RendezVousRepositoryFake();
+    $maintenant = new DateTimeImmutable();
+    $debut = $maintenant->modify('+1 day');
+
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', $debut, MotifVisite::CONSULTATION, $maintenant);
+    $depot->ajouter($rdv);
+
+    $service = new ServiceRendezVous($depot);
+    $dto = $service->consulter('rdv-1');
+
+    expect($dto->id)->toBe('rdv-1')
+        ->and($dto->praticienId)->toBe('praticien-1');
+});
+
+test('consulter un RDV inconnu lève une exception dédiée', function () {
+    $service = new ServiceRendezVous(new RendezVousRepositoryFake());
+
+    expect(fn () => $service->consulter('rdv-inconnu'))
+        ->toThrow(RendezVousIntrouvableException::class);
 });
