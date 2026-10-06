@@ -17,10 +17,8 @@ final class AnnulerRendezVousAction
     {
     }
 
-    public function __invoke(Request $request, Response $response, array $args): Response
+    public function __invoke(Request $request, Response $response, string $id): Response
     {
-        $id = $args['id'];
-
         try {
             $rendezVousDTO = $this->serviceRendezVous->annuler($id);
         } catch (RendezVousIntrouvableException $exception) {

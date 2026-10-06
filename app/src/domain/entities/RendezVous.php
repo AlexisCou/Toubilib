@@ -67,6 +67,30 @@ final class RendezVous
             StatutRendezVous::CREE,
         );
     }
+    public static function validerEtCreer(
+        string $id,
+        Praticien $praticien,
+        Patient $patient,
+        DateTimeImmutable $dateHeureDebut,
+        MotifVisite $motifVisite,
+        DateTimeImmutable $maintenant,
+    ): self {
+        $praticien->verifierMotifAccepte($motifVisite);
+        $praticien->verifierHoraireAcceptable($dateHeureDebut);
+
+        $dateHeureFin = $dateHeureDebut->modify(
+            sprintf('+%d minutes', $praticien->dureeRdv($motifVisite))
+        );
+
+        $praticien->verifierDisponibilite($dateHeureDebut, $dateHeureFin);
+
+        return self::creer($id, $praticien->id(), $patient->id(), $dateHeureDebut, $motifVisite, $maintenant);
+    }
+
+    public function chevauche(DateTimeImmutable $debut, DateTimeImmutable $fin): bool
+    {
+        return $this->dateHeureDebut < $fin && $debut < $this->dateHeureFin;
+    }
 
     public function annuler(DateTimeImmutable $maintenant): void
     {

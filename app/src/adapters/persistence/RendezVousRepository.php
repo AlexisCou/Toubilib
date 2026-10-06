@@ -36,6 +36,25 @@ final class RendezVousRepository implements RendezVousRepositoryInterface
         return $this->versEntite($ligne);
     }
 
+    public function findParPraticienEtJour(string $praticienId, DateTimeImmutable $jour): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, praticien_id, patient_id, date_heure_debut, date_heure_fin,
+                    date_creation, motif_visite, status
+             FROM rdv
+             WHERE praticien_id = :praticien_id
+               AND date_heure_debut::date = :jour'
+        );
+        $statement->execute([
+            'praticien_id' => $praticienId,
+            'jour' => $jour->format('Y-m-d'),
+        ]);
+
+        $lignes = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn (array $ligne): RendezVous => $this->versEntite($ligne), $lignes);
+    }
+
     public function save(RendezVous $rendezVous): void
     {
         $existant = $this->pdo->prepare('SELECT 1 FROM rdv WHERE id = :id');

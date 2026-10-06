@@ -15,10 +15,8 @@ final class ConsulterPraticienAction
     {
     }
 
-    public function __invoke(Request $request, Response $response, array $args): Response
+    public function __invoke(Request $request, Response $response, string $id): Response
     {
-        $id = $args['id'];
-
         try {
             $praticienDTO = $this->praticienService->consulter($id);
         } catch (PraticienIntrouvableException $exception) {

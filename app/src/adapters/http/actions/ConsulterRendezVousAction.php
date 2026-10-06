@@ -15,10 +15,8 @@ final class ConsulterRendezVousAction
     {
     }
 
-    public function __invoke(Request $request, Response $response, array $args): Response
+    public function __invoke(Request $request, Response $response, string $id): Response
     {
-        $id = $args['id'];
-
         try {
             $rendezVousDTO = $this->serviceRendezVous->consulter($id);
         } catch (RendezVousIntrouvableException $exception) {

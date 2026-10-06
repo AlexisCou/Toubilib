@@ -6,9 +6,11 @@ use Slim\App;
 use toubilib\adapters\http\actions\AnnulerRendezVousAction;
 use toubilib\adapters\http\actions\ConsulterPraticienAction;
 use toubilib\adapters\http\actions\ConsulterRendezVousAction;
+use toubilib\adapters\http\actions\CreerRendezVousAction;
 use toubilib\adapters\http\actions\ListerPraticiensAction;
 
 return function (App $app): void {
+    $app->post('/rdv', CreerRendezVousAction::class);
     $app->patch('/rdv/{id}/annulation', AnnulerRendezVousAction::class);
     $app->get('/rdv/{id}', ConsulterRendezVousAction::class);
 
