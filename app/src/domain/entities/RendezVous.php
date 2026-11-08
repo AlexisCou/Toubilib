@@ -7,6 +7,7 @@ namespace toubilib\domain\entities;
 use DateTimeImmutable;
 use toubilib\domain\exceptions\RendezVousDejaAnnuleException;
 use toubilib\domain\exceptions\RendezVousDejaPasseException;
+use toubilib\domain\exceptions\RendezVousStatutInvalideException;
 
 final class RendezVous
 {
@@ -111,11 +112,23 @@ final class RendezVous
 
     public function marquerHonore(): void
     {
+        if ($this->statut !== StatutRendezVous::CREE) {
+            throw new RendezVousStatutInvalideException(
+                sprintf('Le rendez-vous %s ne peut pas être marqué honoré (statut actuel : %s).', $this->id, $this->statut->name)
+            );
+        }
+
         $this->statut = StatutRendezVous::HONORE;
     }
 
     public function marquerIgnore(): void
     {
+        if ($this->statut !== StatutRendezVous::CREE) {
+            throw new RendezVousStatutInvalideException(
+                sprintf('Le rendez-vous %s ne peut pas être marqué ignoré (statut actuel : %s).', $this->id, $this->statut->name)
+            );
+        }
+
         $this->statut = StatutRendezVous::IGNORE;
     }
 

@@ -6,6 +6,7 @@ namespace toubilib\adapters\http\actions;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use toubilib\adapters\http\HateoasLinks;
 use toubilib\application\dto\CreateRdvDTO;
 use toubilib\application\exceptions\DonneesRdvInvalidesException;
 use toubilib\application\exceptions\PatientIntrouvableException;
@@ -40,11 +41,14 @@ final class CreerRendezVousAction
             return $this->erreurJson($response, 409, $exception->getMessage());
         }
 
-        $response->getBody()->write(json_encode($rendezVousDTO->versTableau(), JSON_THROW_ON_ERROR));
+        $reponse = $rendezVousDTO->versTableau();
+        $reponse['links'] = HateoasLinks::pourRendezVous($rendezVousDTO);
+
+        $response->getBody()->write(json_encode($reponse, JSON_THROW_ON_ERROR));
 
         return $response
             ->withHeader('Content-Type', 'application/json')
-            ->withHeader('Location', sprintf('/rdv/%s', $rendezVousDTO->id))
+            ->withHeader('Location', sprintf('/rdvs/%s', $rendezVousDTO->id))
             ->withStatus(201);
     }
 

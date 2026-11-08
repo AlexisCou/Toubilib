@@ -55,6 +55,47 @@ final class RendezVousRepository implements RendezVousRepositoryInterface
         return array_map(fn (array $ligne): RendezVous => $this->versEntite($ligne), $lignes);
     }
 
+    public function findCreneauxOccupesParPraticien(string $praticienId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, praticien_id, patient_id, date_heure_debut, date_heure_fin,
+                    date_creation, motif_visite, status
+             FROM rdv
+             WHERE praticien_id = :praticien_id
+               AND status != :statut_annule
+             ORDER BY date_heure_debut'
+        );
+        $statement->execute([
+            'praticien_id' => $praticienId,
+            'statut_annule' => StatutRendezVous::ANNULE->value,
+        ]);
+
+        $lignes = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn (array $ligne): RendezVous => $this->versEntite($ligne), $lignes);
+    }
+
+    public function findParPraticienEtPeriode(string $praticienId, DateTimeImmutable $debut, DateTimeImmutable $fin): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, praticien_id, patient_id, date_heure_debut, date_heure_fin,
+                    date_creation, motif_visite, status
+             FROM rdv
+             WHERE praticien_id = :praticien_id
+               AND date_heure_debut::date BETWEEN :debut AND :fin
+             ORDER BY date_heure_debut'
+        );
+        $statement->execute([
+            'praticien_id' => $praticienId,
+            'debut' => $debut->format('Y-m-d'),
+            'fin' => $fin->format('Y-m-d'),
+        ]);
+
+        $lignes = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn (array $ligne): RendezVous => $this->versEntite($ligne), $lignes);
+    }
+
     public function save(RendezVous $rendezVous): void
     {
         $existant = $this->pdo->prepare('SELECT 1 FROM rdv WHERE id = :id');

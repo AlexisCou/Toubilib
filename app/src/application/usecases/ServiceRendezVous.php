@@ -44,6 +44,36 @@ final class ServiceRendezVous implements ServiceRendezVousInterface
         return RendezVousDTO::depuisEntite($rendezVous);
     }
 
+    public function honorer(string $id): RendezVousDTO
+    {
+        $rendezVous = $this->rendezVousRepository->find($id);
+
+        if ($rendezVous === null) {
+            throw RendezVousIntrouvableException::pourId($id);
+        }
+
+        $rendezVous->marquerHonore();
+
+        $this->rendezVousRepository->save($rendezVous);
+
+        return RendezVousDTO::depuisEntite($rendezVous);
+    }
+
+    public function ignorer(string $id): RendezVousDTO
+    {
+        $rendezVous = $this->rendezVousRepository->find($id);
+
+        if ($rendezVous === null) {
+            throw RendezVousIntrouvableException::pourId($id);
+        }
+
+        $rendezVous->marquerIgnore();
+
+        $this->rendezVousRepository->save($rendezVous);
+
+        return RendezVousDTO::depuisEntite($rendezVous);
+    }
+
     public function consulter(string $id): RendezVousDTO
     {
         $rendezVous = $this->rendezVousRepository->find($id);
@@ -53,6 +83,34 @@ final class ServiceRendezVous implements ServiceRendezVousInterface
         }
 
         return RendezVousDTO::depuisEntite($rendezVous);
+    }
+
+    public function listerCreneauxOccupes(string $praticienId): array
+    {
+        if ($this->praticienRepository->find($praticienId) === null) {
+            throw PraticienIntrouvableException::pourId($praticienId);
+        }
+
+        $rendezVous = $this->rendezVousRepository->findCreneauxOccupesParPraticien($praticienId);
+
+        return array_map(
+            static fn (RendezVous $rdv): RendezVousDTO => RendezVousDTO::depuisEntite($rdv),
+            $rendezVous,
+        );
+    }
+
+    public function obtenirAgenda(string $praticienId, DateTimeImmutable $debut, DateTimeImmutable $fin): array
+    {
+        if ($this->praticienRepository->find($praticienId) === null) {
+            throw PraticienIntrouvableException::pourId($praticienId);
+        }
+
+        $rendezVous = $this->rendezVousRepository->findParPraticienEtPeriode($praticienId, $debut, $fin);
+
+        return array_map(
+            static fn (RendezVous $rdv): RendezVousDTO => RendezVousDTO::depuisEntite($rdv),
+            $rendezVous,
+        );
     }
 
     public function creer(CreateRdvDTO $dto): RendezVousDTO

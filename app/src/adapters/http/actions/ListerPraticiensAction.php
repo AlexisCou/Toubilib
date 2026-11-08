@@ -6,6 +6,7 @@ namespace toubilib\adapters\http\actions;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use toubilib\adapters\http\HateoasLinks;
 use toubilib\application\dto\PraticienDTO;
 use toubilib\application\ports\api\PraticienServiceInterface;
 
@@ -20,7 +21,12 @@ final class ListerPraticiensAction
         $praticiens = $this->praticienService->lister();
 
         $donnees = array_map(
-            static fn (PraticienDTO $dto): array => $dto->versTableau(),
+            static function (PraticienDTO $dto): array {
+                $ligne = $dto->versTableau();
+                $ligne['links'] = HateoasLinks::pourPraticien($dto);
+
+                return $ligne;
+            },
             $praticiens,
         );
 

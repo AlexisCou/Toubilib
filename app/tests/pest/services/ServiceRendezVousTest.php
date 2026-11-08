@@ -19,6 +19,7 @@ use toubilib\domain\entities\StatutRendezVous;
 use toubilib\domain\exceptions\CreneauIndisponibleException;
 use toubilib\domain\exceptions\HoraireNonDisponibleException;
 use toubilib\domain\exceptions\RendezVousDejaPasseException;
+use toubilib\domain\exceptions\RendezVousStatutInvalideException;
 
 function creerService(
     ?RendezVousRepositoryFake $rendezVousDepot = null,
@@ -122,6 +123,114 @@ test('consulter un RDV inconnu lève une exception dédiée', function () {
 
     expect(fn () => $service->consulter('rdv-inconnu'))
         ->toThrow(RendezVousIntrouvableException::class);
+});
+
+test('honorer un RDV à l’état CREE met à jour son statut via le repository', function () {
+    $depot = new RendezVousRepositoryFake();
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-01 09:00:00'), MotifVisite::CONSULTATION, new DateTimeImmutable('2026-08-01 10:00:00'));
+    $depot->ajouter($rdv);
+
+    $service = creerService(rendezVousDepot: $depot);
+    $dto = $service->honorer('rdv-1');
+
+    expect($dto->statut)->toBe(StatutRendezVous::HONORE->name)
+        ->and($depot->find('rdv-1')->statut())->toBe(StatutRendezVous::HONORE);
+});
+
+test('honorer un RDV inconnu lève une exception dédiée', function () {
+    $service = creerService();
+
+    expect(fn () => $service->honorer('rdv-inconnu'))
+        ->toThrow(RendezVousIntrouvableException::class);
+});
+
+test('honorer un RDV déjà annulé lève une exception dédiée', function () {
+    $depot = new RendezVousRepositoryFake();
+    $maintenant = new DateTimeImmutable();
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', $maintenant->modify('+1 day'), MotifVisite::CONSULTATION, $maintenant);
+    $rdv->annuler($maintenant);
+    $depot->ajouter($rdv);
+
+    $service = creerService(rendezVousDepot: $depot);
+
+    expect(fn () => $service->honorer('rdv-1'))
+        ->toThrow(RendezVousStatutInvalideException::class);
+});
+
+test('ignorer un RDV à l’état CREE met à jour son statut via le repository', function () {
+    $depot = new RendezVousRepositoryFake();
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-01 09:00:00'), MotifVisite::CONSULTATION, new DateTimeImmutable('2026-08-01 10:00:00'));
+    $depot->ajouter($rdv);
+
+    $service = creerService(rendezVousDepot: $depot);
+    $dto = $service->ignorer('rdv-1');
+
+    expect($dto->statut)->toBe(StatutRendezVous::IGNORE->name)
+        ->and($depot->find('rdv-1')->statut())->toBe(StatutRendezVous::IGNORE);
+});
+
+test('ignorer un RDV inconnu lève une exception dédiée', function () {
+    $service = creerService();
+
+    expect(fn () => $service->ignorer('rdv-inconnu'))
+        ->toThrow(RendezVousIntrouvableException::class);
+});
+
+test('listerCreneauxOccupes renvoie les RDV non annulés d’un praticien, triés par date', function () {
+    $praticienDepot = new PraticienRepositoryFake();
+    $praticienDepot->ajouter(praticienPourServiceTest());
+    $depot = new RendezVousRepositoryFake();
+    $maintenant = new DateTimeImmutable('2026-08-01 10:00:00');
+
+    $rdv1 = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-10 10:00:00'), MotifVisite::CONSULTATION, $maintenant);
+    $rdv2 = RendezVous::creer('rdv-2', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-08 09:00:00'), MotifVisite::CONSULTATION, $maintenant);
+    $rdvAnnule = RendezVous::creer('rdv-3', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-09 09:00:00'), MotifVisite::CONSULTATION, $maintenant);
+    $rdvAnnule->annuler($maintenant);
+    $depot->ajouter($rdv1);
+    $depot->ajouter($rdv2);
+    $depot->ajouter($rdvAnnule);
+
+    $service = creerService($depot, $praticienDepot);
+    $resultats = $service->listerCreneauxOccupes('praticien-1');
+
+    expect($resultats)->toHaveCount(2)
+        ->and($resultats[0]->id)->toBe('rdv-2')
+        ->and($resultats[1]->id)->toBe('rdv-1');
+});
+
+test('listerCreneauxOccupes avec un praticien inconnu lève une exception dédiée', function () {
+    $service = creerService();
+
+    expect(fn () => $service->listerCreneauxOccupes('praticien-inconnu'))
+        ->toThrow(PraticienIntrouvableException::class);
+});
+
+test('obtenirAgenda renvoie tous les RDV d’un praticien sur la période, quel que soit leur statut', function () {
+    $praticienDepot = new PraticienRepositoryFake();
+    $praticienDepot->ajouter(praticienPourServiceTest());
+    $depot = new RendezVousRepositoryFake();
+    $maintenant = new DateTimeImmutable('2026-08-01 10:00:00');
+
+    $dansLaPeriode = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-10 10:00:00'), MotifVisite::CONSULTATION, $maintenant);
+    $dansLaPeriodeAnnule = RendezVous::creer('rdv-2', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-11 09:00:00'), MotifVisite::CONSULTATION, $maintenant);
+    $dansLaPeriodeAnnule->annuler($maintenant);
+    $horsPeriode = RendezVous::creer('rdv-3', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-10-20 09:00:00'), MotifVisite::CONSULTATION, $maintenant);
+    $depot->ajouter($dansLaPeriode);
+    $depot->ajouter($dansLaPeriodeAnnule);
+    $depot->ajouter($horsPeriode);
+
+    $service = creerService($depot, $praticienDepot);
+    $resultats = $service->obtenirAgenda('praticien-1', new DateTimeImmutable('2026-09-01'), new DateTimeImmutable('2026-09-30'));
+
+    expect($resultats)->toHaveCount(2)
+        ->and(array_map(fn ($dto) => $dto->id, $resultats))->toBe(['rdv-1', 'rdv-2']);
+});
+
+test('obtenirAgenda avec un praticien inconnu lève une exception dédiée', function () {
+    $service = creerService();
+
+    expect(fn () => $service->obtenirAgenda('praticien-inconnu', new DateTimeImmutable('2026-09-01'), new DateTimeImmutable('2026-09-30')))
+        ->toThrow(PraticienIntrouvableException::class);
 });
 
 test('creer un RDV valide le praticien, le patient, l’horaire et la disponibilité puis persiste le RDV', function () {

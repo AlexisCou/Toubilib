@@ -11,6 +11,7 @@ use toubilib\domain\exceptions\CreneauIndisponibleException;
 use toubilib\domain\exceptions\HoraireNonDisponibleException;
 use toubilib\domain\exceptions\RendezVousDejaAnnuleException;
 use toubilib\domain\exceptions\RendezVousDejaPasseException;
+use toubilib\domain\exceptions\RendezVousStatutInvalideException;
 
 function praticienDeTestPourRdv(string $id = 'praticien-1'): Praticien
 {
@@ -132,4 +133,30 @@ test('validerEtCreer refuse un créneau déjà occupé', function () {
 
     expect(fn () => RendezVous::validerEtCreer('rdv-2', $praticien, $patient, $debut, MotifVisite::CONSULTATION, new DateTimeImmutable()))
         ->toThrow(CreneauIndisponibleException::class);
+});
+
+test('un RDV à l’état CREE peut être marqué honoré', function () {
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-10 09:00:00'), MotifVisite::CONSULTATION, new DateTimeImmutable('2026-09-01 10:00:00'));
+
+    $rdv->marquerHonore();
+
+    expect($rdv->statut())->toBe(StatutRendezVous::HONORE);
+});
+
+test('un RDV à l’état CREE peut être marqué ignoré', function () {
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', new DateTimeImmutable('2026-09-10 09:00:00'), MotifVisite::CONSULTATION, new DateTimeImmutable('2026-09-01 10:00:00'));
+
+    $rdv->marquerIgnore();
+
+    expect($rdv->statut())->toBe(StatutRendezVous::IGNORE);
+});
+
+test('un RDV annulé ne peut pas être marqué honoré ou ignoré', function () {
+    $maintenant = new DateTimeImmutable('2026-09-01 10:00:00');
+    $debut = new DateTimeImmutable('2026-09-10 09:00:00');
+    $rdv = RendezVous::creer('rdv-1', 'praticien-1', 'patient-1', $debut, MotifVisite::CONSULTATION, $maintenant);
+    $rdv->annuler($maintenant);
+
+    expect(fn () => $rdv->marquerHonore())->toThrow(RendezVousStatutInvalideException::class)
+        ->and(fn () => $rdv->marquerIgnore())->toThrow(RendezVousStatutInvalideException::class);
 });

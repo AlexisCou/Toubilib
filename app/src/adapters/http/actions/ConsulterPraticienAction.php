@@ -6,6 +6,7 @@ namespace toubilib\adapters\http\actions;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use toubilib\adapters\http\HateoasLinks;
 use toubilib\application\exceptions\PraticienIntrouvableException;
 use toubilib\application\ports\api\PraticienServiceInterface;
 
@@ -23,7 +24,10 @@ final class ConsulterPraticienAction
             return $this->erreurJson($response, 404, $exception->getMessage());
         }
 
-        $response->getBody()->write(json_encode($praticienDTO->versTableau(), JSON_THROW_ON_ERROR));
+        $donnees = $praticienDTO->versTableau();
+        $donnees['links'] = HateoasLinks::pourPraticien($praticienDTO);
+
+        $response->getBody()->write(json_encode($donnees, JSON_THROW_ON_ERROR));
 
         return $response
             ->withHeader('Content-Type', 'application/json')
